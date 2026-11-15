@@ -365,6 +365,27 @@
             let drag = null;
             let suppressClick = null;
             let frame = 0;
+            let panFrame = 0;
+            let minimumPan = 0;
+            let layoutScale = 1;
+            let pendingPan = 0;
+            const sendPan = deltaX => canvasWindow.dispatchEvent(new view.WheelEvent('wheel', {
+                deltaX, deltaY: 0, bubbles: true, cancelable: true
+            }));
+            const updatePan = () => {
+                panFrame = 0;
+                if (pendingPan) {
+                    const delta = pendingPan;
+                    pendingPan = 0;
+                    sendPan(delta);
+                }
+                const matrix = new view.DOMMatrixReadOnly(view.getComputedStyle(canvas).transform);
+                if (Math.abs(matrix.a - layoutScale) > 0.001) { schedule(); return; }
+                if (matrix.m41 < minimumPan - 0.5) sendPan(matrix.m41 - minimumPan);
+            };
+            const schedulePan = () => {
+                if (!panFrame) panFrame = view.requestAnimationFrame(updatePan);
+            };
             const arrange = () => {
                 frame = 0;
                 if (preview.contentDocument !== works) return;
@@ -426,6 +447,16 @@
                         mask.setAttribute('height', height * 1.03);
                     }
                 });
+                // Cache the boundary in canvas coordinates; panning needs no card measurements.
+                const currentPan = new view.DOMMatrixReadOnly(view.getComputedStyle(canvas).transform).m41;
+                const edgeCards = activeCategory
+                    ? cards.filter(card => view.getComputedStyle(card).visibility !== 'hidden')
+                    : [works.querySelector('.project-card-neworgan')].filter(Boolean);
+                if (edgeCards.length) {
+                    const edge = Math.max(...edgeCards.map(card => card.getBoundingClientRect().right));
+                    minimumPan = -Math.max(0, edge - currentPan + view.innerWidth * (activeCategory ? 0.1 : 0.05) - view.innerWidth);
+                }
+                layoutScale = scale;
                 const lastWork = works.querySelector('.project-card-neworgan');
                 if (activeCategory) {
                     const visible = cards.filter(card => view.getComputedStyle(card).visibility !== 'hidden');
@@ -488,7 +519,7 @@
                 if (!card || (event.pointerType === 'mouse' && event.button !== 0)) return;
                 event.stopImmediatePropagation();
                 // Block the desktop card-drag handler without changing saved positions.
-                drag = { card, id: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
+                drag = { card, id: event.pointerId, x: event.clientX, y: event.clientY, lastX: event.clientX, moved: false };
                 card.setPointerCapture(event.pointerId);
             };
             const moveDrag = event => {
@@ -497,6 +528,11 @@
                 const dx = event.clientX - drag.x;
                 const dy = event.clientY - drag.y;
                 if (Math.hypot(dx, dy) > 3) drag.moved = true;
+                if (drag.moved) {
+                    pendingPan += drag.lastX - event.clientX;
+                    schedulePan();
+                }
+                drag.lastX = event.clientX;
             };
             const endDrag = event => {
                 if (!drag || event.pointerId !== drag.id) return;
@@ -506,7 +542,7 @@
                     view.setTimeout(() => { suppressClick = null; }, 0);
                 }
                 drag = null;
-                schedule();
+                schedulePan();
             };
             const preventDragClick = event => {
                 if (!suppressClick || event.target.closest('.project-card') !== suppressClick) return;
@@ -520,7 +556,10 @@
             works.addEventListener('click', preventDragClick, true);
             works.addEventListener('click', focusCategory, true);
             const sizes = new ResizeObserver(schedule);
-            const positions = new MutationObserver(schedule);
+            const positions = new MutationObserver(records => {
+                if (records.some(record => record.target !== canvas || record.type === 'childList')) schedule();
+                else schedulePan();
+            });
             cards.forEach(card => {
                 sizes.observe(card);
                 positions.observe(card, { attributes: true, attributeFilter: ['style'] });
@@ -541,6 +580,7 @@
                 works.removeEventListener('click', preventDragClick, true);
                 works.removeEventListener('click', focusCategory, true);
                 if (frame) view.cancelAnimationFrame(frame);
+                if (panFrame) view.cancelAnimationFrame(panFrame);
             };
         }
 
