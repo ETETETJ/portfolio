@@ -59,8 +59,25 @@
                     label.style.setProperty('font-size', `${view.innerWidth * 0.02 / scale}px`, 'important');
                 });
             };
+            const enlargeBackIcons = () => {
+                if (preview.contentDocument !== welcome) return;
+                const view = welcome.defaultView;
+                welcome.querySelectorAll('img[src$="/back.png"]').forEach(icon => {
+                    if (icon.dataset.mobileBackEnlarged) return;
+                    const width = icon.getBoundingClientRect().width;
+                    if (!width) return;
+                    const transform = view.getComputedStyle(icon).transform;
+                    const factor = (width + view.innerWidth * 0.02) / width;
+                    // Append the scale after the existing translation to retain its center.
+                    icon.style.transform = `${transform === 'none' ? '' : transform} scale(${factor})`;
+                    icon.dataset.mobileBackEnlarged = 'true';
+                });
+            };
             welcome.fonts.ready.then(() => welcome.defaultView.requestAnimationFrame(() =>
-                welcome.defaultView.requestAnimationFrame(uniformProjectTags)));
+                welcome.defaultView.requestAnimationFrame(() => {
+                    uniformProjectTags();
+                    enlargeBackIcons();
+                })));
             const enlargeStarHeadings = () => {
                 if (preview.contentDocument !== welcome) return;
                 const parents = new Set([...welcome.querySelectorAll('img[src*="blackstar.png"], img[src*="redstar.png"]')]
