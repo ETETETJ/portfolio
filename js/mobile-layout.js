@@ -580,7 +580,7 @@
             const focusCategory = event => {
                 const link = event.target.closest('.main-nav a');
                 if (!link) return;
-                view.scrollTo(0, 0);
+                canvasWindow.scrollTop = 0;
                 activeCategory = [...link.classList].find(name => name.startsWith('nav-'));
                 categoryNeedsLayout = true;
                 ++rasterVersion;
@@ -648,14 +648,26 @@
             // 212vw, followed by 8vw of space. No scroll-time extent measurement.
             const scrollStyle = works.createElement('style');
             scrollStyle.textContent = `
-                html { height: auto; min-height: 100%; overflow-y: auto; overflow-x: hidden; }
-                body { height: 220vw; min-height: 100vh; overflow: visible; }
-                .canvas-window { position: absolute; bottom: auto; height: 220vw; touch-action: pan-y; }
-                .project-card { touch-action: pan-y; }
-                .contact-link { position: absolute; bottom: 0; }
+                html, body { height: 100%; overflow: hidden; }
+                .canvas-window {
+                    position: fixed; inset: 0; height: 100%; overflow-x: hidden;
+                    overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch;
+                }
+                .mobile-canvas-surface {
+                    position: relative; width: 100%; height: 220vw;
+                    min-height: 100%; overflow: hidden; touch-action: pan-y;
+                }
+                .art-canvas, .project-card, .project-card img { touch-action: pan-y; }
+                .mobile-canvas-surface .contact-link { position: absolute; bottom: 0; }
                 .canvas-hint { display: none; }
             `;
             works.head.append(scrollStyle);
+            const scrollSurface = works.createElement('div');
+            scrollSurface.className = 'mobile-canvas-surface';
+            canvasWindow.append(scrollSurface);
+            scrollSurface.append(canvas);
+            const contact = works.querySelector('.contact-link');
+            if (contact) scrollSurface.append(contact);
             const fixedResize = event => event.stopImmediatePropagation();
             const wheelPan = event => {
                 event.stopImmediatePropagation();
