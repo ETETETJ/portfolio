@@ -369,6 +369,80 @@
             let minimumPan = 0;
             let frozenPan = 0;
             let pendingPan = 0;
+            let rasterLayer = null;
+            let rasterVersion = 0;
+            const assetData = new Map();
+            const inlineAsset = url => {
+                if (!assetData.has(url)) {
+                    assetData.set(url, view.fetch(url).then(response => {
+                        if (!response.ok) throw new Error('Mask asset unavailable');
+                        return response.blob();
+                    }).then(blob => new Promise((resolve, reject) => {
+                        const reader = new view.FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    })));
+                }
+                return assetData.get(url);
+            };
+            const bakeHighlights = async () => {
+                const version = ++rasterVersion;
+                const originals = [...canvas.children].filter(node => node.tagName.toLowerCase() === 'svg');
+                if (!originals.length) return;
+                // Keep the live effects visible until a complete, sharp replacement is ready.
+                const bounds = canvas.getBoundingClientRect();
+                const x = -bounds.left + frozenPan;
+                const y = -bounds.top;
+                const width = Math.ceil(view.innerWidth - minimumPan);
+                const height = view.innerHeight;
+                const ratio = view.devicePixelRatio || 1;
+                const svg = works.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                svg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
+                svg.setAttribute('width', Math.ceil(width * ratio));
+                svg.setAttribute('height', Math.ceil(height * ratio));
+                for (const original of originals) {
+                    if (original.style.visibility === 'hidden') continue;
+                    for (const child of original.children) svg.append(child.cloneNode(true));
+                }
+                let objectURL;
+                try {
+                    await Promise.all([...svg.querySelectorAll('image')].map(async image => {
+                        const url = image.getAttribute('href');
+                        if (url && !url.startsWith('data:')) image.setAttribute('href', await inlineAsset(url));
+                    }));
+                    if (version !== rasterVersion || preview.contentDocument !== works) return;
+                    objectURL = view.URL.createObjectURL(new view.Blob([
+                        new view.XMLSerializer().serializeToString(svg)
+                    ], { type: 'image/svg+xml' }));
+                    const image = new view.Image();
+                    image.src = objectURL;
+                    await image.decode();
+                    if (version !== rasterVersion || preview.contentDocument !== works) return;
+                    const layer = works.createElement('canvas');
+                    layer.width = Math.ceil(width * ratio);
+                    layer.height = Math.ceil(height * ratio);
+                    layer.setAttribute('aria-hidden', 'true');
+                    Object.assign(layer.style, {
+                        position: 'absolute', left: `${x}px`, top: `${y}px`,
+                        width: `${width}px`, height: `${height}px`,
+                        pointerEvents: 'none', zIndex: '1'
+                    });
+                    const context = layer.getContext('2d');
+                    if (!context) return;
+                    context.drawImage(image, 0, 0, layer.width, layer.height);
+                    rasterLayer?.remove();
+                    rasterLayer = layer;
+                    canvas.prepend(layer);
+                    originals.forEach(original => { original.style.display = 'none'; });
+                } catch {
+                    // Retain the original visual effects if rasterization is unavailable.
+                } finally {
+                    if (objectURL) view.URL.revokeObjectURL(objectURL);
+                }
+            };
+
             const sendPan = deltaX => {
                 frozenPan = Math.max(minimumPan, Math.min(0, frozenPan - deltaX));
                 canvas.style.transform = `translate3d(${frozenPan}px, 0px, 0px) scale(1)`;
@@ -493,6 +567,7 @@
                 } else if (canvas.style.clipPath) {
                     canvas.style.clipPath = '';
                 }
+                bakeHighlights();
             };
             const schedule = () => {
                 if (!frame) frame = view.requestAnimationFrame(arrange);
@@ -502,6 +577,11 @@
                 if (!link) return;
                 activeCategory = [...link.classList].find(name => name.startsWith('nav-'));
                 categoryNeedsLayout = true;
+                ++rasterVersion;
+                rasterLayer?.remove();
+                rasterLayer = null;
+                [...canvas.children].filter(node => node.tagName.toLowerCase() === 'svg')
+                    .forEach(node => { node.style.display = ''; });
                 canvas.style.clipPath = '';
                 cards.forEach(card => { card.style.translate = '0px 0px'; });
                 pendingPan = 0;
@@ -570,6 +650,9 @@
             canvasWindow.addEventListener('wheel', wheelPan, { capture: true, passive: false });
             arrange();
             stopAlignment = () => {
+                ++rasterVersion;
+                rasterLayer?.remove();
+                assetData.clear();
                 view.removeEventListener('resize', fixedResize, true);
                 canvasWindow.removeEventListener('wheel', wheelPan, true);
                 works.removeEventListener('pointerdown', startDrag, true);
