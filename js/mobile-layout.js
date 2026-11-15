@@ -157,6 +157,7 @@
                 }`;
                 titleStyle.textContent += `
                     .animation-detail-page .animation-project-tags { font-size: 2vw; }
+                    .animation-detail-page .animation-scenes-details { translate: calc(-3vw / 1.15) 0; }
                     .winwing-detail-page .winwing-project-tags { white-space: nowrap; width: max-content; }
                 `;
                 welcome.head.append(titleStyle);
