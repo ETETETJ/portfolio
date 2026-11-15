@@ -62,8 +62,8 @@
                     if (heading.matches('.animation-scenes-details')) {
                         const parts = [...heading.children].map(part => part.getBoundingClientRect());
                         const width = Math.max(...parts.map(part => part.right)) - Math.min(...parts.map(part => part.left));
-                        if (width > view.innerWidth * 0.02) {
-                            heading.style.scale = String((width - view.innerWidth * 0.02) / width);
+                        if (width > view.innerWidth * 0.05) {
+                            heading.style.scale = String((width - view.innerWidth * 0.05) / width);
                             heading.style.transformOrigin = 'center center';
                         }
                     }
@@ -88,7 +88,7 @@
                     font-size: ${welcome.body.classList.contains('animation-detail-page') ? '3vw' : '5vw'};
                 }`;
                 titleStyle.textContent += `
-                    .animation-detail-page .animation-project-tags { font-size: 3vw; }
+                    .animation-detail-page .animation-project-tags { font-size: 2vw; }
                 `;
                 welcome.head.append(titleStyle);
                 if (welcome.body.classList.contains('root-detail-page')) {
