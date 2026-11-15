@@ -9,7 +9,11 @@
             style: {
                 set transform(value) {
                     const offset = /translateY\(([^)]+)\)/.exec(value);
-                    document.documentElement.style.translate = offset ? `0px ${offset[1]}` : '';
+                    // Root transforms can leave a duplicated/clipped paint strip in iOS Safari.
+                    // The body is already positioned, so a top offset preserves the layout
+                    // without transforming the viewport or fixed modal layers.
+                    document.documentElement.style.removeProperty('translate');
+                    document.body.style.top = offset ? offset[1] : '';
                 },
                 set backgroundColor(value) { document.documentElement.style.backgroundColor = value; }
             }
