@@ -360,21 +360,11 @@
             const layoutHeight = () => view.innerWidth * 844 / 390;
             const referenceCenters = {
                 'speci.html': [0.30, 0.17], 'seedan.html': [0.64, 0.33],
-                'flowers.html': [0.30, 0.50], 'taro.html': [0.64, 0.62],
+                'flowers.html': [0.30, 0.45], 'taro.html': [0.64, 0.62],
                 'winwing.html': [0.30, 0.77], 'map.html': [0.64, 0.91],
-                'root.html': [1.04, 0.17], 'mei.html': [1.04, 0.50],
-                '2d.html': [1.04, 0.77], 'ca.html': [1.50, 0.33],
-                'earthbound.html': [1.50, 0.17], 'withoutconsent.html': [1.50, 0.62],
-                'neworgan.html': [1.90, 0.91]
-            };
-            // Category pages retain their existing composition independently of overview edits.
-            const categoryReferenceCenters = {
-                ...referenceCenters,
-                'flowers.html': [0.30, 0.45],
-                'root.html': [1.10, 0.17],
-                '2d.html': [1.10, 0.80],
-                'earthbound.html': [1.50, 0.12],
-                'withoutconsent.html': [1.50, 0.60],
+                'root.html': [1.10, 0.17], 'mei.html': [1.04, 0.50],
+                '2d.html': [1.10, 0.80], 'ca.html': [1.50, 0.33],
+                'earthbound.html': [1.50, 0.12], 'withoutconsent.html': [1.50, 0.60],
                 'neworgan.html': [1.90, 0.80]
             };
             let drag = null;
@@ -485,14 +475,14 @@
                     // Filtering hides other works; it must not replace the fixed columns
                     // with the desktop filter's horizontal row.
                     const firstLeft = Math.min(...visible.map(card => {
-                        const center = categoryReferenceCenters[keyFor(card)] || [2, 0.5];
+                        const center = referenceCenters[keyFor(card)] || [2, 0.5];
                         return view.innerWidth * center[0] - card.getBoundingClientRect().width / 2;
                     }));
                     const shift = firstLeft >= view.innerWidth ? firstLeft - view.innerWidth * 0.1 : 0;
                     const layout = {};
                     visible.forEach(card => {
                         const bounds = card.getBoundingClientRect();
-                        const center = categoryReferenceCenters[keyFor(card)] || [2, 0.5];
+                        const center = referenceCenters[keyFor(card)] || [2, 0.5];
                         layout[keyFor(card)] = {
                             x: ((view.innerWidth * center[0] - shift - bounds.width / 2 - canvasBounds.left) / scale - card.offsetLeft) / view.innerWidth,
                             y: ((layoutHeight() * center[1] - bounds.height / 2 - canvasBounds.top) / scale - card.offsetTop) / view.innerHeight
