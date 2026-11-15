@@ -367,21 +367,17 @@
             let frame = 0;
             let panFrame = 0;
             let minimumPan = 0;
-            let layoutScale = 1;
+            let frozenPan = 0;
             let pendingPan = 0;
-            const sendPan = deltaX => canvasWindow.dispatchEvent(new view.WheelEvent('wheel', {
-                deltaX, deltaY: 0, bubbles: true, cancelable: true
-            }));
+            const sendPan = deltaX => {
+                frozenPan = Math.max(minimumPan, Math.min(0, frozenPan - deltaX));
+                canvas.style.transform = `translate3d(${frozenPan}px, 0px, 0px) scale(1)`;
+            };
             const updatePan = () => {
                 panFrame = 0;
-                if (pendingPan) {
-                    const delta = pendingPan;
-                    pendingPan = 0;
-                    sendPan(delta);
-                }
-                const matrix = new view.DOMMatrixReadOnly(view.getComputedStyle(canvas).transform);
-                if (Math.abs(matrix.a - layoutScale) > 0.001) { schedule(); return; }
-                if (matrix.m41 < minimumPan - 0.5) sendPan(matrix.m41 - minimumPan);
+                const delta = pendingPan;
+                pendingPan = 0;
+                if (delta) sendPan(delta);
             };
             const schedulePan = () => {
                 if (!panFrame) panFrame = view.requestAnimationFrame(updatePan);
@@ -456,7 +452,7 @@
                     const edge = Math.max(...edgeCards.map(card => card.getBoundingClientRect().right));
                     minimumPan = -Math.max(0, edge - currentPan + view.innerWidth * (activeCategory ? 0.1 : 0.05) - view.innerWidth);
                 }
-                layoutScale = scale;
+                frozenPan = currentPan;
                 const lastWork = works.querySelector('.project-card-neworgan');
                 if (activeCategory) {
                     const visible = cards.filter(card => view.getComputedStyle(card).visibility !== 'hidden');
@@ -508,15 +504,15 @@
                 categoryNeedsLayout = true;
                 canvas.style.clipPath = '';
                 cards.forEach(card => { card.style.translate = '0px 0px'; });
-                const pan = new view.DOMMatrixReadOnly(view.getComputedStyle(canvas).transform).m41;
-                canvasWindow.dispatchEvent(new view.WheelEvent('wheel', {
-                    deltaX: pan, deltaY: 0, bubbles: true, cancelable: true
-                }));
+                pendingPan = 0;
+                frozenPan = 0;
+                canvas.style.transform = 'translate3d(0px, 0px, 0px) scale(1)';
                 schedule();
             };
             const startDrag = event => {
-                const card = event.target.closest('.project-card');
-                if (!card || (event.pointerType === 'mouse' && event.button !== 0)) return;
+                const card = event.target.closest('.project-card') ||
+                    (canvasWindow.contains(event.target) ? canvasWindow : null);
+                if (!card || event.target.closest('button') || (event.pointerType === 'mouse' && event.button !== 0)) return;
                 event.stopImmediatePropagation();
                 // Block the desktop card-drag handler without changing saved positions.
                 drag = { card, id: event.pointerId, x: event.clientX, y: event.clientY, lastX: event.clientX, moved: false };
@@ -555,24 +551,27 @@
             works.addEventListener('pointercancel', endDrag, true);
             works.addEventListener('click', preventDragClick, true);
             works.addEventListener('click', focusCategory, true);
-            const sizes = new ResizeObserver(schedule);
-            const positions = new MutationObserver(records => {
-                if (records.some(record => record.target !== canvas || record.type === 'childList')) schedule();
-                else schedulePan();
+            // Freeze the current canvas box once. Browser toolbar resizing and panning
+            // must not trigger desktop extent calculation or SVG mask reconstruction.
+            const box = view.getComputedStyle(canvas);
+            Object.assign(canvas.style, {
+                width: `${canvas.offsetWidth}px`, height: `${canvas.offsetHeight}px`,
+                left: box.left, top: box.top, right: 'auto', bottom: 'auto'
             });
-            cards.forEach(card => {
-                sizes.observe(card);
-                positions.observe(card, { attributes: true, attributeFilter: ['style'] });
-            });
-            positions.observe(canvas, { attributes: true, attributeFilter: ['style'], childList: true });
-            view.addEventListener('resize', schedule);
+            const fixedResize = event => event.stopImmediatePropagation();
+            const wheelPan = event => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (event.ctrlKey || event.metaKey) return;
+                pendingPan += Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+                schedulePan();
+            };
+            view.addEventListener('resize', fixedResize, true);
+            canvasWindow.addEventListener('wheel', wheelPan, { capture: true, passive: false });
             arrange();
-            // Let the existing canvas logic update the horizontal browsing limits.
-            view.dispatchEvent(new Event('resize'));
             stopAlignment = () => {
-                sizes.disconnect();
-                positions.disconnect();
-                view.removeEventListener('resize', schedule);
+                view.removeEventListener('resize', fixedResize, true);
+                canvasWindow.removeEventListener('wheel', wheelPan, true);
                 works.removeEventListener('pointerdown', startDrag, true);
                 works.removeEventListener('pointermove', moveDrag, true);
                 works.removeEventListener('pointerup', endDrag, true);
