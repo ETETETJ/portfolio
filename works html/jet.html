@@ -5,6 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#ffffff">
     <title>Entong Jiang — Portfolio</title>
+    <style media="(max-width: 767px)">
+        html.mobile-works-loading .art-canvas > .project-card,
+        html.mobile-works-loading .art-canvas > svg,
+        html.mobile-works-loading .art-canvas > canvas {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+    </style>
+    <script>
+        (() => {
+            let isPreview = false;
+            try { isPreview = !!window.parent.document.querySelector('.mobile-preview-screen'); } catch {}
+            if (matchMedia('(max-width: 767px)').matches && (window.parent === window || isPreview)) {
+                document.documentElement.classList.add('mobile-works-loading');
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="../css/jet.css">
 </head>
 <body>
@@ -81,6 +98,6 @@
 
     <script src="../js/jet.js"></script>
     <script src="../js/page-navigation.js"></script>
-    <script src="../js/mobile-layout.js?v=20261116-7"></script>
+    <script src="../js/mobile-layout.js?v=20261116-8"></script>
 </body>
 </html>

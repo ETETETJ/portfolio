@@ -401,6 +401,12 @@
             const header = works.querySelector('.site-header');
             const ornament = header?.querySelector('.header-ornament');
             const navigation = header?.querySelector('.main-nav');
+            const siteTitle = header?.querySelector('.site-title');
+            if (siteTitle) {
+                const fontSize = parseFloat(view.getComputedStyle(siteTitle).fontSize);
+                siteTitle.style.fontSize = `${fontSize + view.innerWidth * 0.02}px`;
+            }
+
             if (ornament && navigation) {
                 const headerStyle = view.getComputedStyle(header);
                 const group = works.createElement('div');
@@ -769,6 +775,15 @@
             view.addEventListener('resize', fixedResize, true);
             canvasWindow.addEventListener('wheel', wheelPan, { capture: true, passive: false });
             arrange();
+            Promise.all([
+                works.fonts.ready,
+                ...cards.map(card => {
+                    const image = card.querySelector('img');
+                    return image?.decode ? image.decode().catch(() => {}) : Promise.resolve();
+                })
+            ]).then(() => view.requestAnimationFrame(() => view.requestAnimationFrame(() => {
+                if (preview.contentDocument === works) works.documentElement.classList.remove('mobile-works-loading');
+            })));
             stopAlignment = () => {
                 ++rasterVersion;
                 scrollStyle.remove();
