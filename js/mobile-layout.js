@@ -220,6 +220,7 @@
                     // The hero, description and gallery retain the same shared center anchor.
                     contentStyle.textContent = `
                         .flowers-detail-page .project-detail { height: 62.5vw; }
+                        .flowers-detail-page .flowers-pdf-button { translate: 0 5vw; }
                         .flowers-detail-page .flowers-description { top: calc(31.25vw + 14.91vw); }
                         .flowers-detail-page .flowers-gallery { padding-top: calc(31.25vw + 24vw); }
                     `;
