@@ -147,6 +147,7 @@
                 }`;
                 titleStyle.textContent += `
                     .animation-detail-page .animation-project-tags { font-size: 2vw; }
+                    .winwing-detail-page .winwing-project-tags { white-space: nowrap; width: max-content; }
                 `;
                 welcome.head.append(titleStyle);
                 if (welcome.body.classList.contains('root-detail-page')) {
