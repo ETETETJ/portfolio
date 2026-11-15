@@ -404,7 +404,7 @@
             const siteTitle = header?.querySelector('.site-title');
             if (siteTitle) {
                 const fontSize = parseFloat(view.getComputedStyle(siteTitle).fontSize);
-                siteTitle.style.fontSize = `${fontSize + view.innerWidth * 0.02}px`;
+                siteTitle.style.fontSize = `${fontSize + view.innerWidth * 0.01}px`;
             }
 
             if (ornament && navigation) {
