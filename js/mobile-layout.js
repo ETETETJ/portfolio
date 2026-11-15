@@ -39,6 +39,28 @@
                 adaptMobileCv(welcome);
                 return;
             }
+            // Apply after the page-specific preview wrappers (including Mei's virtual canvas).
+            // Compensate for scaled content groups so every label renders at the same 2vw.
+            const uniformProjectTags = () => {
+                if (preview.contentDocument !== welcome) return;
+                const view = welcome.defaultView;
+                const labels = welcome.querySelectorAll('[class$="-project-tags"]:not(.flowers-project-tags), .flowers-project-tags > p');
+                labels.forEach(label => {
+                    if (!label.textContent.trim().startsWith('#')) return;
+                    let scale = 1;
+                    for (let node = label; node && node !== welcome.documentElement; node = node.parentElement) {
+                        const style = view.getComputedStyle(node);
+                        if (style.transform !== 'none') {
+                            const matrix = new view.DOMMatrixReadOnly(style.transform);
+                            scale *= Math.hypot(matrix.a, matrix.b);
+                        }
+                        if (style.scale && style.scale !== 'none') scale *= parseFloat(style.scale);
+                    }
+                    label.style.setProperty('font-size', `${view.innerWidth * 0.02 / scale}px`, 'important');
+                });
+            };
+            welcome.fonts.ready.then(() => welcome.defaultView.requestAnimationFrame(() =>
+                welcome.defaultView.requestAnimationFrame(uniformProjectTags)));
             const enlargeStarHeadings = () => {
                 if (preview.contentDocument !== welcome) return;
                 const parents = new Set([...welcome.querySelectorAll('img[src*="blackstar.png"], img[src*="redstar.png"]')]
