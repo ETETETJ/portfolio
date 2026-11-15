@@ -35,6 +35,25 @@
             if (isPreview) document.querySelector('.mobile-preview-screen').style.backgroundColor = previewBackground;
             if (isWinwing || isAnimation) welcome.documentElement.style.backgroundColor = previewBackground;
             setPreviewLabel('手机尺寸预览 · 390 × 844');
+            const imageTouchStyle = welcome.createElement('style');
+            imageTouchStyle.textContent = `
+                img[data-image-viewer], dialog img, .mei-postcard-pair img {
+                    -webkit-tap-highlight-color: transparent;
+                    -webkit-touch-callout: none;
+                }
+                html.mobile-image-touch img:focus,
+                html.mobile-image-touch a:focus:has(img) {
+                    outline: none !important;
+                }
+            `;
+            welcome.head.append(imageTouchStyle);
+            welcome.addEventListener('pointerdown', event => {
+                welcome.documentElement.classList.toggle('mobile-image-touch', event.pointerType !== 'mouse');
+            }, { capture: true, passive: true });
+            welcome.addEventListener('keydown', () => {
+                welcome.documentElement.classList.remove('mobile-image-touch');
+            }, true);
+
             if (welcome?.body.classList.contains('cv-page')) {
                 adaptMobileCv(welcome);
                 return;
