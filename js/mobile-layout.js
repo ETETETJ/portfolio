@@ -284,6 +284,7 @@
             const background = welcome?.querySelector('.welcome-portfolio-background');
             if (!navigation || !background) return;
             const welcomeView = welcome.defaultView;
+            navigation.style.rowGap = '3.5vw';
 
             let observer;
             let canvas;
