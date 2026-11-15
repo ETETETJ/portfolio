@@ -59,6 +59,14 @@
                         star.style.setProperty('height', `${height}px`, 'important');
                         star.style.setProperty('width', `${height * ratio}px`, 'important');
                     });
+                    if (heading.matches('.animation-scenes-details')) {
+                        const parts = [...heading.children].map(part => part.getBoundingClientRect());
+                        const width = Math.max(...parts.map(part => part.right)) - Math.min(...parts.map(part => part.left));
+                        if (width > view.innerWidth * 0.02) {
+                            heading.style.scale = String((width - view.innerWidth * 0.02) / width);
+                            heading.style.transformOrigin = 'center center';
+                        }
+                    }
                 }
             };
             welcome.fonts.ready.then(() => welcome.defaultView.requestAnimationFrame(enlargeStarHeadings));
@@ -79,6 +87,9 @@
                 titleStyle.textContent = `html body[class] h1.flowers-page-title {
                     font-size: ${welcome.body.classList.contains('animation-detail-page') ? '3vw' : '5vw'};
                 }`;
+                titleStyle.textContent += `
+                    .animation-detail-page .animation-project-tags { font-size: 3vw; }
+                `;
                 welcome.head.append(titleStyle);
                 if (welcome.body.classList.contains('root-detail-page')) {
                     const description = welcome.querySelector('.root-description');
