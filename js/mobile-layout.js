@@ -465,39 +465,32 @@
                 frame = 0;
                 if (preview.contentDocument !== works) return;
                 const scale = canvas.getBoundingClientRect().height / canvas.offsetHeight;
+                const categoryCards = activeCategory
+                    ? cards.filter(card => view.getComputedStyle(card).visibility !== 'hidden') : [];
+                const categoryGap = view.innerWidth * 0.03;
+                const baseCategoryWidth = categoryCards.reduce((sum, card) =>
+                    sum + view.innerWidth * (widths[cards.indexOf(card)] + 0.1), 0);
+                const categoryScale = baseCategoryWidth ? Math.min(1,
+                    (view.innerWidth * 0.8 - categoryGap * Math.max(0, categoryCards.length - 1)) / baseCategoryWidth) : 1;
                 cards.forEach((card, index) => {
-                    const width = `${view.innerWidth * (widths[index] + 0.1)}px`;
+                    const width = `${view.innerWidth * (widths[index] + 0.1) * (activeCategory ? categoryScale : 1)}px`;
                     if (card.style.width !== width) card.style.width = width;
                 });
                 if (activeCategory && categoryNeedsLayout) {
-                    const visible = cards.filter(card => view.getComputedStyle(card).visibility !== 'hidden');
+                    const visible = categoryCards;
                     const canvasBounds = canvas.getBoundingClientRect();
-                    const gap = view.innerWidth * 0.06;
                     const sizes = visible.map(card => ({ card, bounds: card.getBoundingClientRect() }));
-                    // Center the complete category below the header, without changing icon sizes.
-                    const columns = sizes.some((item, index) => index % 2 === 0 && sizes[index + 1] &&
-                        item.bounds.width + sizes[index + 1].bounds.width + gap > view.innerWidth * 0.8) ? 1 : 2;
-                    const rows = [];
-                    for (let index = 0; index < sizes.length; index += columns) {
-                        const items = sizes.slice(index, index + columns);
-                        rows.push({ items,
-                            width: items.reduce((sum, item) => sum + item.bounds.width, 0) + gap * (items.length - 1),
-                            height: Math.max(...items.map(item => item.bounds.height)) });
-                    }
-                    const totalHeight = rows.reduce((sum, row) => sum + row.height, 0) + gap * Math.max(0, rows.length - 1);
-                    const headerBottom = header.getBoundingClientRect().bottom;
-                    let top = Math.max(headerBottom + gap, (headerBottom + view.innerHeight - totalHeight) / 2);
+                    const rowWidth = sizes.reduce((sum, item) => sum + item.bounds.width, 0) +
+                        categoryGap * Math.max(0, sizes.length - 1);
+                    const centerY = (header.getBoundingClientRect().bottom + view.innerHeight) / 2;
+                    let left = (view.innerWidth - rowWidth) / 2;
                     const layout = {};
-                    for (const row of rows) {
-                        let left = (view.innerWidth - row.width) / 2;
-                        for (const { card, bounds } of row.items) {
-                            layout[keyFor(card)] = {
-                                x: ((left - canvasBounds.left) / scale - card.offsetLeft) / view.innerWidth,
-                                y: ((top + (row.height - bounds.height) / 2 - canvasBounds.top) / scale - card.offsetTop) / view.innerHeight
-                            };
-                            left += bounds.width + gap;
-                        }
-                        top += row.height + gap;
+                    for (const { card, bounds } of sizes) {
+                        layout[keyFor(card)] = {
+                            x: ((left - canvasBounds.left) / scale - card.offsetLeft) / view.innerWidth,
+                            y: ((centerY - bounds.height / 2 - canvasBounds.top) / scale - card.offsetTop) / view.innerHeight
+                        };
+                        left += bounds.width + categoryGap;
                     }
                     categoryPositions.set(activeCategory, layout);
                     categoryNeedsLayout = false;
