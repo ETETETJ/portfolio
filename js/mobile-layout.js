@@ -519,12 +519,8 @@
                 const categoryCards = activeCategory
                     ? cards.filter(card => view.getComputedStyle(card).visibility !== 'hidden') : [];
                 const categoryGap = view.innerWidth * 0.03;
-                const baseCategoryWidth = categoryCards.reduce((sum, card) =>
-                    sum + view.innerWidth * (widths[cards.indexOf(card)] + 0.1), 0);
-                const categoryScale = baseCategoryWidth ? Math.min(1,
-                    (view.innerWidth * 0.8 - categoryGap * Math.max(0, categoryCards.length - 1)) / baseCategoryWidth) : 1;
                 cards.forEach((card, index) => {
-                    const width = `${view.innerWidth * (widths[index] + 0.1) * (activeCategory ? categoryScale : 1)}px`;
+                    const width = `${view.innerWidth * (widths[index] + 0.1)}px`;
                     if (card.style.width !== width) card.style.width = width;
                 });
                 if (activeCategory && categoryNeedsLayout) {
@@ -533,8 +529,8 @@
                     const sizes = visible.map(card => ({ card, bounds: card.getBoundingClientRect() }));
                     const rowWidth = sizes.reduce((sum, item) => sum + item.bounds.width, 0) +
                         categoryGap * Math.max(0, sizes.length - 1);
-                    const centerY = (header.getBoundingClientRect().bottom + view.innerHeight) / 2;
-                    let left = (view.innerWidth - rowWidth) / 2;
+                    const centerY = view.innerHeight / 2;
+                    let left = Math.max(view.innerWidth * 0.1, (view.innerWidth - rowWidth) / 2);
                     const layout = {};
                     for (const { card, bounds } of sizes) {
                         layout[keyFor(card)] = {
