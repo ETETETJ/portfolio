@@ -41,8 +41,12 @@
                     -webkit-tap-highlight-color: transparent;
                     -webkit-touch-callout: none;
                 }
+                .jet-contact-dialog a[href^="mailto:"] {
+                    -webkit-tap-highlight-color: transparent;
+                }
                 html.mobile-image-touch img:focus,
-                html.mobile-image-touch a:focus:has(img) {
+                html.mobile-image-touch a:focus:has(img),
+                html.mobile-image-touch .jet-contact-dialog a[href^="mailto:"]:focus {
                     outline: none !important;
                 }
             `;
