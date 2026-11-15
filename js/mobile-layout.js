@@ -363,9 +363,9 @@
                 'flowers.html': [0.30, 0.45], 'taro.html': [0.64, 0.62],
                 'winwing.html': [0.30, 0.77], 'map.html': [0.64, 0.91],
                 'root.html': [1.04, 0.17], 'mei.html': [1.04, 0.50],
-                '2d.html': [1.04, 0.80], 'ca.html': [1.50, 0.33],
+                '2d.html': [1.04, 0.77], 'ca.html': [1.50, 0.33],
                 'earthbound.html': [1.50, 0.12], 'withoutconsent.html': [1.50, 0.60],
-                'neworgan.html': [1.90, 0.80]
+                'neworgan.html': [1.90, 0.77]
             };
             let drag = null;
             let suppressClick = null;
