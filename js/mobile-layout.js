@@ -334,6 +334,7 @@
             }
             const canvas = works.querySelector('.art-canvas');
             const canvasWindow = works.querySelector('.canvas-window');
+            const fixedCanvasHeight = view.innerWidth * 2.2;
             // Start phones at the same scale, independent of desktop zoom history.
             const storedTransform = new view.DOMMatrixReadOnly(view.getComputedStyle(canvas).transform);
             if (Math.abs(storedTransform.a - 1) > 0.001) {
@@ -399,7 +400,7 @@
                 const x = -bounds.left + frozenPan;
                 const y = -bounds.top;
                 const width = Math.ceil(view.innerWidth - minimumPan);
-                const height = view.innerHeight;
+                const height = fixedCanvasHeight;
                 const ratio = view.devicePixelRatio || 1;
                 const svg = works.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -579,6 +580,7 @@
             const focusCategory = event => {
                 const link = event.target.closest('.main-nav a');
                 if (!link) return;
+                view.scrollTo(0, 0);
                 activeCategory = [...link.classList].find(name => name.startsWith('nav-'));
                 categoryNeedsLayout = true;
                 ++rasterVersion;
@@ -642,12 +644,25 @@
                 width: `${canvas.offsetWidth}px`, height: `${canvas.offsetHeight}px`,
                 left: box.left, top: box.top, right: 'auto', bottom: 'auto'
             });
+            // 220vw is the fixed reference composition: lowest card ends near
+            // 212vw, followed by 8vw of space. No scroll-time extent measurement.
+            const scrollStyle = works.createElement('style');
+            scrollStyle.textContent = `
+                html { height: auto; min-height: 100%; overflow-y: auto; overflow-x: hidden; }
+                body { height: 220vw; min-height: 100vh; overflow: visible; }
+                .canvas-window { position: absolute; bottom: auto; height: 220vw; touch-action: pan-y; }
+                .project-card { touch-action: pan-y; }
+                .contact-link { position: absolute; bottom: 0; }
+                .canvas-hint { display: none; }
+            `;
+            works.head.append(scrollStyle);
             const fixedResize = event => event.stopImmediatePropagation();
             const wheelPan = event => {
-                event.preventDefault();
                 event.stopImmediatePropagation();
-                if (event.ctrlKey || event.metaKey) return;
-                pendingPan += Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+                if (event.ctrlKey || event.metaKey) { event.preventDefault(); return; }
+                if (Math.abs(event.deltaY) >= Math.abs(event.deltaX)) return;
+                event.preventDefault();
+                pendingPan += event.deltaX;
                 schedulePan();
             };
             view.addEventListener('resize', fixedResize, true);
@@ -655,6 +670,7 @@
             arrange();
             stopAlignment = () => {
                 ++rasterVersion;
+                scrollStyle.remove();
                 rasterLayer?.remove();
                 assetData.clear();
                 view.removeEventListener('resize', fixedResize, true);
