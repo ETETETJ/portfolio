@@ -472,22 +472,33 @@
                 if (activeCategory && categoryNeedsLayout) {
                     const visible = cards.filter(card => view.getComputedStyle(card).visibility !== 'hidden');
                     const canvasBounds = canvas.getBoundingClientRect();
-                    // Filtering hides other works; it must not replace the fixed columns
-                    // with the desktop filter's horizontal row.
-                    const firstLeft = Math.min(...visible.map(card => {
-                        const center = referenceCenters[keyFor(card)] || [2, 0.5];
-                        return view.innerWidth * center[0] - card.getBoundingClientRect().width / 2;
-                    }));
-                    const shift = firstLeft >= view.innerWidth ? firstLeft - view.innerWidth * 0.1 : 0;
+                    const gap = view.innerWidth * 0.06;
+                    const sizes = visible.map(card => ({ card, bounds: card.getBoundingClientRect() }));
+                    // Center the complete category below the header, without changing icon sizes.
+                    const columns = sizes.some((item, index) => index % 2 === 0 && sizes[index + 1] &&
+                        item.bounds.width + sizes[index + 1].bounds.width + gap > view.innerWidth * 0.8) ? 1 : 2;
+                    const rows = [];
+                    for (let index = 0; index < sizes.length; index += columns) {
+                        const items = sizes.slice(index, index + columns);
+                        rows.push({ items,
+                            width: items.reduce((sum, item) => sum + item.bounds.width, 0) + gap * (items.length - 1),
+                            height: Math.max(...items.map(item => item.bounds.height)) });
+                    }
+                    const totalHeight = rows.reduce((sum, row) => sum + row.height, 0) + gap * Math.max(0, rows.length - 1);
+                    const headerBottom = header.getBoundingClientRect().bottom;
+                    let top = Math.max(headerBottom + gap, (headerBottom + view.innerHeight - totalHeight) / 2);
                     const layout = {};
-                    visible.forEach(card => {
-                        const bounds = card.getBoundingClientRect();
-                        const center = referenceCenters[keyFor(card)] || [2, 0.5];
-                        layout[keyFor(card)] = {
-                            x: ((view.innerWidth * center[0] - shift - bounds.width / 2 - canvasBounds.left) / scale - card.offsetLeft) / view.innerWidth,
-                            y: ((layoutHeight() * center[1] - bounds.height / 2 - canvasBounds.top) / scale - card.offsetTop) / view.innerHeight
-                        };
-                    });
+                    for (const row of rows) {
+                        let left = (view.innerWidth - row.width) / 2;
+                        for (const { card, bounds } of row.items) {
+                            layout[keyFor(card)] = {
+                                x: ((left - canvasBounds.left) / scale - card.offsetLeft) / view.innerWidth,
+                                y: ((top + (row.height - bounds.height) / 2 - canvasBounds.top) / scale - card.offsetTop) / view.innerHeight
+                            };
+                            left += bounds.width + gap;
+                        }
+                        top += row.height + gap;
+                    }
                     categoryPositions.set(activeCategory, layout);
                     categoryNeedsLayout = false;
                 }
