@@ -359,9 +359,9 @@
             // Screenshot composition on a 390 × 844 reference, scaled by width.
             const layoutHeight = () => view.innerWidth * 844 / 390;
             const referenceCenters = {
-                'speci.html': [0.30, 0.17], 'seedan.html': [0.75, 0.33],
+                'speci.html': [0.30, 0.17], 'seedan.html': [0.64, 0.33],
                 'flowers.html': [0.30, 0.45], 'taro.html': [0.64, 0.62],
-                'winwing.html': [0.30, 0.77], 'map.html': [0.75, 0.91],
+                'winwing.html': [0.30, 0.77], 'map.html': [0.64, 0.91],
                 'root.html': [1.10, 0.17], 'mei.html': [1.04, 0.50],
                 '2d.html': [1.10, 0.80], 'ca.html': [1.50, 0.33],
                 'earthbound.html': [1.50, 0.12], 'withoutconsent.html': [1.50, 0.60],
