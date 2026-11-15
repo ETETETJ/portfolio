@@ -96,6 +96,16 @@
                 welcome.defaultView.requestAnimationFrame(() => {
                     uniformProjectTags();
                     enlargeBackIcons();
+                    if (welcome.body.classList.contains('map-detail-page')) {
+                        const view = welcome.defaultView;
+                        welcome.querySelectorAll('.map-book-prev, .map-book-next').forEach(arrow => {
+                            const style = view.getComputedStyle(arrow);
+                            const fontSize = parseFloat(style.fontSize);
+                            const factor = (fontSize + view.innerWidth * 0.03 / 1.05) / fontSize;
+                            arrow.style.transform = `${style.transform === 'none' ? '' : style.transform} scale(${factor})`;
+                        });
+                    }
+
                 })));
             const enlargeStarHeadings = () => {
                 if (preview.contentDocument !== welcome) return;
