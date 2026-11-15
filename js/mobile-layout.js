@@ -416,7 +416,7 @@
                 'root.html': [1.04, 0.17], 'mei.html': [1.04, 0.50],
                 '2d.html': [1.04, 0.77], 'ca.html': [1.50, 0.33],
                 'earthbound.html': [1.50, 0.91], 'withoutconsent.html': [1.50, 0.60],
-                'neworgan.html': [1.90, 0.77]
+                'neworgan.html': [1.90, 0.17]
             };
             let drag = null;
             let suppressClick = null;
