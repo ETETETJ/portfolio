@@ -471,20 +471,22 @@
                 });
                 if (activeCategory && categoryNeedsLayout) {
                     const visible = cards.filter(card => view.getComputedStyle(card).visibility !== 'hidden');
-                    const gap = view.innerWidth * 0.03;
-                    const totalWidth = visible.reduce((sum, card) => sum + card.getBoundingClientRect().width, 0) +
-                        Math.max(0, visible.length - 1) * gap;
                     const canvasBounds = canvas.getBoundingClientRect();
-                    const centerY = (header.getBoundingClientRect().bottom + view.innerHeight) / 2;
-                    let left = Math.max(view.innerWidth * 0.1, (view.innerWidth - totalWidth) / 2);
+                    // Filtering hides other works; it must not replace the fixed columns
+                    // with the desktop filter's horizontal row.
+                    const firstLeft = Math.min(...visible.map(card => {
+                        const center = referenceCenters[keyFor(card)] || [2, 0.5];
+                        return view.innerWidth * center[0] - card.getBoundingClientRect().width / 2;
+                    }));
+                    const shift = firstLeft >= view.innerWidth ? firstLeft - view.innerWidth * 0.1 : 0;
                     const layout = {};
                     visible.forEach(card => {
                         const bounds = card.getBoundingClientRect();
+                        const center = referenceCenters[keyFor(card)] || [2, 0.5];
                         layout[keyFor(card)] = {
-                            x: ((left - canvasBounds.left) / scale - card.offsetLeft) / view.innerWidth,
-                            y: ((centerY - bounds.height / 2 - canvasBounds.top) / scale - card.offsetTop) / view.innerHeight
+                            x: ((view.innerWidth * center[0] - shift - bounds.width / 2 - canvasBounds.left) / scale - card.offsetLeft) / view.innerWidth,
+                            y: ((layoutHeight() * center[1] - bounds.height / 2 - canvasBounds.top) / scale - card.offsetTop) / view.innerHeight
                         };
-                        left += bounds.width + gap;
                     });
                     categoryPositions.set(activeCategory, layout);
                     categoryNeedsLayout = false;
