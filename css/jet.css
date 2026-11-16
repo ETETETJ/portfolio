@@ -3019,6 +3019,12 @@ a {
     margin: 0;
 }
 
+@media (min-width: 768px) {
+    .flowers-detail-page .flowers-project-tags > p {
+        font-size: 1vw;
+    }
+}
+
 .flowers-back-link {
     display: block;
     width: 10vw;
