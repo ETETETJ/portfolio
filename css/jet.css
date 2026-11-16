@@ -531,6 +531,17 @@ a {
     text-align: center;
 }
 
+@media (min-width: 768px) {
+    .main-nav .nav-graphics {
+        translate: calc(0.2vw / 0.94) 0;
+    }
+    .main-nav .nav-video,
+    .main-nav .nav-electronics,
+    .main-nav .nav-3d {
+        translate: calc(-0.2vw / 0.94) 0;
+    }
+}
+
 .main-nav a,
 .about-link,
 .site-title,
