@@ -2029,6 +2029,12 @@ a {
     object-fit: contain;
 }
 
+@media (min-width: 768px) {
+    .mei-detail-page .mei-postcard-pair img {
+        height: auto;
+    }
+}
+
 .mei-postcards-gallery .mei-postcard-pair:nth-child(2) {
     position: relative;
     top: -0.4vw;
